@@ -2,59 +2,66 @@
 
 An end-to-end computer vision application that analyzes food images and estimates
 their freshness using deep learning–based vision models.  
-Designed to demonstrate real-world application of AI/ML concepts for placement and internship evaluation.
+The system supports both **image upload** and **live camera input** for real-time food quality assessment.
+
+Designed for placement and internship evaluation to demonstrate practical AI/ML deployment skills.
 
 ---
 
 ## 📌 Problem Statement
-Food spoilage leads to health risks and unnecessary food waste.  
-Consumers often rely on visual inspection, which can be subjective and unreliable.
-This project aims to assist users by automatically assessing food freshness from images
-using computer vision techniques.
+Food spoilage causes health risks and unnecessary waste.  
+Manual visual inspection is subjective and error-prone.  
+This project aims to assist users by automatically assessing food freshness
+from images using computer vision techniques.
 
 ---
 
 ## 🚀 Solution Overview
-This system allows users to upload food images and receive:
+The system allows users to:
+- Upload a food image **or**
+- Capture a food image using a **live camera**
+
+It then provides:
 - Detected food category (user-friendly)
 - Freshness status (Fresh / Okay / Avoid)
 - Confidence score
-- Top-k prediction analysis
-- Explainable output for better trust
+- Top-k prediction insights
+- Explainable outputs for transparency
 
-The application is deployed as an interactive web interface using Streamlit.
+The application runs as an interactive web app using Streamlit.
 
 ---
 
 ## 🧠 Model & Approach
 - **Model**: Vision Transformer (ViT)
 - **Pre-training**: ImageNet
-- **Framework**: PyTorch + Hugging Face Transformers
+- **Frameworks**: PyTorch, Hugging Face Transformers
 
 ### Why Vision Transformer?
-- Captures global image context effectively
+- Captures global visual context effectively
 - Industry-relevant deep learning architecture
-- Strong performance on image classification tasks
+- Performs well on complex image classification tasks
 
 ---
 
 ## 🏗️ System Architecture
-1. User uploads a food image
+1. User provides input (image upload or live camera capture)
 2. Image is resized and normalized
 3. Vision Transformer extracts visual features
 4. Softmax layer computes class probabilities
-5. Confidence-driven logic determines freshness status
-6. Results are displayed via web UI
+5. Confidence-based logic determines freshness level
+6. Results are displayed in real time via web UI
 
 ---
 
 ## ✨ Key Features
-- 📷 Image upload and real-time inference
+- 📷 Image upload support
+- 🎥 Live camera-based food image capture
 - 🍏 User-friendly food category mapping
 - 📊 Confidence score visualization
-- 🔍 Top-3 prediction analysis
-- 🧠 Explainability for model decisions
-- 🌐 Clean and interactive web interface
+- 📈 Top-3 prediction analysis
+- 🧠 Explainable decision output
+- 🌐 Clean and interactive Streamlit interface
 
 ---
 

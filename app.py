@@ -2,17 +2,13 @@ import streamlit as st
 from PIL import Image
 import torch
 from transformers import AutoImageProcessor, AutoModelForImageClassification
-
-# --------------------------------------------------
 # Page Configuration
-# --------------------------------------------------
 st.set_page_config(
     page_title="AI Food Freshness Assessment System",
-    page_icon="🍎",
     layout="centered"
 )
 
-# --------------------------------------------------
+
 # ImageNet → User-Friendly Food Mapping
 # --------------------------------------------------
 FOOD_LABEL_MAP = {
@@ -33,9 +29,6 @@ FOOD_LABEL_MAP = {
 # --------------------------------------------------
 MODEL_NAME = "google/vit-base-patch16-224"
 
-# --------------------------------------------------
-# Load Model (Cached)
-# --------------------------------------------------
 @st.cache_resource
 def load_model():
     processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
@@ -48,7 +41,7 @@ processor, model = load_model()
 # --------------------------------------------------
 # Freshness Logic
 # --------------------------------------------------
-def freshness_mapper(confidence: float) -> str:
+def freshness_mapper(confidence):
     if confidence >= 80:
         return "✅ Fresh"
     elif confidence >= 50:
@@ -56,57 +49,66 @@ def freshness_mapper(confidence: float) -> str:
     else:
         return "❌ Avoid"
 
-def explain_prediction(quality: str) -> str:
+def explain_prediction(quality):
     if "Fresh" in quality:
         return "The food appears visually intact with normal color and texture."
     elif "Okay" in quality:
-        return "Minor visual inconsistencies detected. Recommended to consume soon."
+        return "Minor visual variations detected. Consume soon."
     else:
-        return "Visual cues indicate possible spoilage or degradation."
+        return "Visual cues indicate possible spoilage."
 
 # --------------------------------------------------
 # UI
 # --------------------------------------------------
 st.title("🍎 AI-Powered Food Freshness Assessment System")
-st.markdown(
-    "This system uses **deep learning–based computer vision** to analyze food images "
-    "and estimate freshness with confidence-driven decision logic."
+st.markdown("Real-time food freshness analysis using computer vision.")
+
+input_mode = st.radio(
+    "Select input mode",
+    ["Upload Image", "Live Camera"]
 )
 
-uploaded_file = st.file_uploader(
-    "Upload a food image (jpg, jpeg, png)",
-    type=["jpg", "jpeg", "png"]
-)
+image = None
 
 # --------------------------------------------------
-# Inference
+# INPUT HANDLING
 # --------------------------------------------------
-if uploaded_file:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+if input_mode == "Upload Image":
+    uploaded_file = st.file_uploader(
+        "Upload a food image",
+        type=["jpg", "jpeg", "png"]
+    )
+    if uploaded_file:
+        image = Image.open(uploaded_file).convert("RGB")
+
+elif input_mode == "Live Camera":
+    camera_image = st.camera_input("Capture food image")
+    if camera_image:
+        image = Image.open(camera_image).convert("RGB")
+
+# --------------------------------------------------
+# INFERENCE
+# --------------------------------------------------
+if image:
+    st.image(image, caption="Input Image", use_column_width=True)
 
     inputs = processor(images=image, return_tensors="pt")
 
     with torch.no_grad():
         outputs = model(**inputs)
 
-    logits = outputs.logits
-    probs = torch.softmax(logits, dim=-1)[0]
+    probs = torch.softmax(outputs.logits, dim=-1)[0]
 
-    # --------------------------------------------------
-    # Top-1 Prediction
-    # --------------------------------------------------
-    predicted_idx = torch.argmax(probs).item()
-    raw_label = model.config.id2label[predicted_idx]
-    confidence = probs[predicted_idx].item() * 100
+    # Top prediction
+    idx = torch.argmax(probs).item()
+    raw_label = model.config.id2label[idx]
+    confidence = probs[idx].item() * 100
 
-    # User-friendly food name
     food_name = FOOD_LABEL_MAP.get(raw_label.lower(), raw_label.title())
-
     quality = freshness_mapper(confidence)
 
     # --------------------------------------------------
-    # Main Output
+    # OUTPUT
     # --------------------------------------------------
     st.subheader("🔍 Prediction Result")
 
@@ -119,32 +121,7 @@ if uploaded_file:
         st.metric("Freshness Status", quality)
 
     st.progress(int(confidence))
-    st.caption(f"Confidence Score: {confidence:.2f}%")
+    st.caption(f"Confidence: {confidence:.2f}%")
 
     st.info(explain_prediction(quality))
-
-    # Transparency
     st.caption(f"🧠 Model Class (ImageNet): {raw_label}")
-
-    # --------------------------------------------------
-    # 🔥 PLACEMENT-LEVEL FEATURE: TOP-3 PREDICTIONS
-    # --------------------------------------------------
-    st.subheader("📊 Top-3 Model Predictions")
-
-    top_k = 3
-    top_probs, top_indices = torch.topk(probs, top_k)
-
-    for i in range(top_k):
-        lbl = model.config.id2label[top_indices[i].item()]
-        user_lbl = FOOD_LABEL_MAP.get(lbl.lower(), lbl.title())
-        prob = top_probs[i].item() * 100
-
-        st.write(f"**{i+1}. {user_lbl}** — {prob:.2f}%")
-
-# --------------------------------------------------
-# Footer
-# --------------------------------------------------
-st.markdown("---")
-st.caption(
-    "⚙️ Built using Vision Transformer (ViT), PyTorch, Hugging Face Transformers, and Streamlit"
-)
